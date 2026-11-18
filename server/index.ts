@@ -13,9 +13,24 @@ dotenv.config();
 const app = express();
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
-// Middleware
+// Middleware - Allow Vercel production frontend, local dev, or custom CLIENT_URL
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'https://database-migration-safety-analyzer.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean) as string[];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -36,17 +51,20 @@ app.use('/api/rules', rulesRouter);
 app.use('/api/auth', authRouter);
 
 // Root route
-app.get('/', (_req, res) => {
+app.get('/', (req, res) => {
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`;
   res.json({
     service: 'MIGRATECHECK API Backend',
     version: '2.4.0',
     description: 'Database Migration Safety Analyzer backend service',
+    frontend: process.env.CLIENT_URL || 'https://database-migration-safety-analyzer.vercel.app',
+    status: 'ONLINE',
     endpoints: [
-      'GET  /api/health',
-      'POST /api/analyze',
-      'GET  /api/migrations',
-      'POST /api/migrations',
-      'GET  /api/rules',
+      `GET  ${baseUrl}/api/health`,
+      `POST ${baseUrl}/api/analyze`,
+      `GET  ${baseUrl}/api/migrations`,
+      `POST ${baseUrl}/api/migrations`,
+      `GET  ${baseUrl}/api/rules`,
     ],
   });
 });
@@ -65,12 +83,16 @@ async function startServer() {
   // Attempt PostgreSQL initialization
   await initializeDatabase();
 
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || process.env.SERVER_URL || `http://localhost:${PORT}`;
+  const clientUrl = process.env.CLIENT_URL || 'https://database-migration-safety-analyzer.vercel.app';
+
   app.listen(PORT, () => {
     console.log(`=======================================================`);
-    console.log(`🚀 MIGRATECHECK Backend API running on http://localhost:${PORT}`);
-    console.log(`   Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`   Migrations API: http://localhost:${PORT}/api/migrations`);
-    console.log(`   Analysis API: http://localhost:${PORT}/api/analyze`);
+    console.log(`🚀 MIGRATECHECK Backend API running on ${baseUrl}`);
+    console.log(`   Frontend Client: ${clientUrl}`);
+    console.log(`   Health Check:    ${baseUrl}/api/health`);
+    console.log(`   Migrations API:  ${baseUrl}/api/migrations`);
+    console.log(`   Analysis API:    ${baseUrl}/api/analyze`);
     console.log(`=======================================================`);
   });
 }

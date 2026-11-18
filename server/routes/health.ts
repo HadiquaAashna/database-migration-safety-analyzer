@@ -47,7 +47,9 @@ healthRouter.get('/', async (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     database: {
       ...dbStatus,
-      message: 'PostgreSQL instance not responding. Run: docker compose up -d or start local PostgreSQL.',
+      message: process.env.DATABASE_URL
+        ? 'PostgreSQL instance not responding. Verify DATABASE_URL credentials.'
+        : 'Running in resilient in-memory mode. Connect PostgreSQL via DATABASE_URL to persist audit history across restarts.',
     },
   });
 });
