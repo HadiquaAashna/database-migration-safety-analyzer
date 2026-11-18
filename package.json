@@ -24,7 +24,9 @@
     "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -39,8 +41,6 @@
     "concurrently": "^10.0.7",
     "postcss": "^8.5.29",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2",
     "vite": "^8.3.3"
   }
 }
